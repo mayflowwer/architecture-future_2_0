@@ -1,0 +1,31 @@
+@startuml
+
+!include <C4/C4_Container>
+
+Person(user, "", "")
+Container(metabase, "Data Mart", "Metabase")
+Container(trino, "Query Engine", "Trino")
+Container(datahub, "Data Catalog", "DataHub")
+Container(airflow, "Airflow", "Apache Airflow")
+ContainerDb(airflow_db, "Airflow DB", "Postgres")
+ContainerDb(data_source1, "Источник данных-1", "PostgreSQL")
+ContainerDb(data_source2, "Источник данных-2", "MySQL")
+Container(meta_data_leyer, "Слой метаданных", "Apache Iceberg + Nessie")
+ContainerDb(dwh, "S3 DataWareHouse", "MinIO")
+
+Rel(user, datahub, "Получает инфу о существующих данных")
+Rel(user, metabase, "Делает запрос на получение данных")
+
+Rel(metabase, trino, "Передаёт SQL запрос")
+Rel(trino, meta_data_leyer, "Запрашивает метаданные таблиц")
+Rel(trino, dwh, "Читает данные напрямую")
+
+Rel(airflow, data_source1, "Извлекает данные")
+Rel(airflow, data_source2, "Извлекает данные")
+Rel(airflow, airflow_db, "Хранит служебную информацию")
+Rel(airflow, dwh, "Загружает данные")
+Rel(airflow, datahub, "Пушит инфу по обновившимся источникам")
+
+Rel(meta_data_leyer, datahub, "Pull метаданных схем таблиц")
+
+@enduml
