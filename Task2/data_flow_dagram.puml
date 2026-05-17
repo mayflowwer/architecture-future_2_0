@@ -1,0 +1,49 @@
+@startuml
+
+!include <C4/C4_Container>
+
+Container_Boundary(clients_domain, "Клиенский домен"){
+    Container(client_registration, "Регистрация пациента", "")
+    Container(client_contract, "Создание контракта и подписание", "")
+    Container(client_medbook, "Создание мед.карты", "")
+    Container(client_appointments, "Запись пациентов на прием", "")
+    Container(crm, "Управление клиентами, коммуникация с клиентами, история запросов", "")    
+}
+Container_Boundary(medical_domain, "Домен медицинских услуг"){
+    Container(doctor_schedule, "Расписание приемов врачей", "")    
+    Container(medical_records, "Ведение мед. карт пациентов, записи приема", "")
+    Container(med_tests, "Назначения на анализы/тесты", "")
+    Container(med_prescribtions, "Рецепты", "")
+    Container(reference_books, "Медицинские справочники/AI-инструменты для врачей", "")
+}
+System_Ext(ext_ai, "Внешние AI-системы для ведения приема")
+Container_Boundary(fin_domain, "Фин-тех домен"){
+    Container(ps_integrations, "Интеграции с платежными системами", "")
+    Container(clients_checkout, "Выставление инвойсов, обеспечение оплаты, сохранение событий оплаты", "")
+    Container(accounting_system, "Система бухгалтерии", "")    
+}
+System_Ext(ps, "Платежная система")
+Container_Boundary(admin_domain, "Административный домен"){
+    Container(employee_domain, "Управление сотрудниками компании", "Найм, труд. договоры, условия труда и проч.")    
+}
+
+Rel(client_registration, doctor_schedule, "Данные пациентов, кот. записались на прием")
+Rel(client_medbook, medical_records, "Данные мед. карт пациентов")
+Rel(client_appointments, doctor_schedule, "Данные записей на прием")
+Rel(client_contract, accounting_system, "Данные подписанных контрактов")
+Rel(reference_books, ext_ai, "Обезличенные данные симптомов пациентов")
+Rel(medical_records, clients_checkout, "Факт оказанной услуги пациенту")
+Rel(ps_integrations, ps, "Данные заявок на оплату")
+Rel(client_registration, crm, "Данные нового пациента")
+Rel(client_appointments, crm, "История записей пациента")
+Rel(clients_checkout, ps_integrations, "Инициирует оплату")
+Rel(clients_checkout, accounting_system, "Факт оплаты")
+Rel(clients_checkout, crm, "История оплат клиента")
+
+Rel(employee_domain, doctor_schedule, "Данные врачей и их график")
+Rel(employee_domain, accounting_system, "Данные для расчёта зарплат")
+
+Rel(med_prescribtions, clients_checkout, "Платная услуга — выписан рецепт")
+Rel(med_tests, clients_checkout, "Платная услуга — назначены анализы")
+
+@enduml
