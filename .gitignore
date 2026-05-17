@@ -1,3 +1,13 @@
 C4-PlantUML
 /C4-PlantUML
 .C4-PlantUML
+.techradar
+build
+node_modules
+key.json
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+ssh_file.pub
+ssh_file
+terraform_1.9.0_darwin_arm64.zip
