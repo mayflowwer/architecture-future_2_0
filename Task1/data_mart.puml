@@ -8,10 +8,24 @@ Container(trino, "Query Engine", "Trino")
 Container(datahub, "Data Catalog", "DataHub")
 Container(airflow, "Airflow", "Apache Airflow")
 ContainerDb(airflow_db, "Airflow DB", "Postgres")
-ContainerDb(data_source1, "Источник данных-1", "PostgreSQL")
-ContainerDb(data_source2, "Источник данных-2", "MySQL")
 Container(meta_data_leyer, "Слой метаданных", "Apache Iceberg + Nessie")
 ContainerDb(dwh, "S3 DataWareHouse", "MinIO")
+Container(dbt, "Transform Layer", "dbt", "SQL-обработка, бизнес-логика витрин")
+
+/' домены бизнеса '/
+Container(medical_ui, "Клиентский интерфейс оператора", "Медданные, снимки")
+Container(fintech, "Финтех-сервисы", "Финансовые данные")
+Container(ai_services, "ИИ-сервисы", "Медицинские данные")
+Container(internal_services, "Внутренние сервисы", "Финансы, управление клиниками")
+
+/' интеграционный слой '/
+Container(camel, "Adapter Layer", "Apache Camel", "Адаптер контрактов")
+Container(schema_registry, "Schema Registry", "Apicurio / Confluent", "Версионность схем EDA, валидация контрактов")
+Container(kafka, "Event Processor", "Apache Kafka", "Транспорт событий между доменами")
+
+/' отдельно для dwh '/
+Container(kafka_connect, "Kafka Connect", "Читает из Kafka-топика и пишет в S3-хранилище")
+
 
 Rel(user, datahub, "Получает инфу о существующих данных")
 Rel(user, metabase, "Делает запрос на получение данных")
@@ -20,12 +34,32 @@ Rel(metabase, trino, "Передаёт SQL запрос")
 Rel(trino, meta_data_leyer, "Запрашивает метаданные таблиц")
 Rel(trino, dwh, "Читает данные напрямую")
 
-Rel(airflow, data_source1, "Извлекает данные")
-Rel(airflow, data_source2, "Извлекает данные")
 Rel(airflow, airflow_db, "Хранит служебную информацию")
-Rel(airflow, dwh, "Загружает данные")
 Rel(airflow, datahub, "Пушит инфу по обновившимся источникам")
 
 Rel(meta_data_leyer, datahub, "Pull метаданных схем таблиц")
+
+/' публикация событий '/
+Rel(medical_ui, camel, "Отправляет событие о регистрации новых мед.данных/обновлении текущих мед.данных")
+Rel(fintech, camel, "Отправляет событие об оплате услуги/другое фин.событие")
+Rel(ai_services, kafka, "Отправляет данные мед. приема пациентов")
+
+
+/' адаптеры '/
+Rel(camel, schema_registry, "Регистрирует схему / получает schema_id")
+Rel(camel, kafka, "Публикует сообщение")
+Rel(kafka, schema_registry, "Десериализация по схеме")
+
+/' доставка до консьюмеров '/
+Rel(kafka, medical_ui, "Медицинские события (свой контракт)")
+Rel(kafka, fintech, "Фин-тех. события (свой контракт)")
+Rel(kafka, ai_services, "Мед.данные события (свой контракт)")
+Rel(kafka, internal_services, "Внутренние фин. данные, управление клиниками")
+
+/' загрузка данных в dwh '/
+Rel(kafka_connect, kafka, "Читает топик для загрузки в DWH")
+Rel(kafka_connect, dwh, "Пишет данные")
+Rel(airflow, dbt, "Запускает трансформации по расписанию")
+Rel(dbt, dwh, "Читает raw, пишет marts")
 
 @enduml
